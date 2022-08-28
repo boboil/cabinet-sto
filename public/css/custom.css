@@ -1,0 +1,168 @@
+.preloader {
+    display: none;
+    /*фиксированное позиционирование*/
+    position: fixed;
+    /* координаты положения */
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    /* фоновый цвет элемента */
+    background: #e0e0e0;
+    /* размещаем блок над всеми элементами на странице (это значение должно быть больше, чем у любого другого позиционированного элемента на странице) */
+    z-index: 1001;
+}
+
+.preloader__row {
+    position: relative;
+    top: 50%;
+    left: 50%;
+    width: 70px;
+    height: 70px;
+    margin-top: -35px;
+    margin-left: -35px;
+    text-align: center;
+    animation: preloader-rotate 2s infinite linear;
+}
+
+.preloader__item {
+    position: absolute;
+    display: inline-block;
+    top: 0;
+    background-color: #337ab7;
+    border-radius: 100%;
+    width: 35px;
+    height: 35px;
+    animation: preloader-bounce 2s infinite ease-in-out;
+}
+
+.preloader__item:last-child {
+    top: auto;
+    bottom: 0;
+    animation-delay: -1s;
+}
+
+@keyframes preloader-rotate {
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes preloader-bounce {
+
+    0%,
+    100% {
+        transform: scale(0);
+    }
+
+    50% {
+        transform: scale(1);
+    }
+}
+
+.loaded_hiding .preloader {
+    transition: 0.3s opacity;
+    opacity: 0;
+}
+.header-phones{
+    color: black;
+    display: flex;
+    justify-content: space-between;
+    text-align: center;
+    z-index: 3;
+}
+.manager-feedback {
+    margin-top: 16px;
+    display: flex;
+    z-index: 3;
+}
+ul.social_chats {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    list-style: none;
+    flex-wrap: nowrap;
+    align-items: center;
+}
+ul.social_chats li {
+    padding-left: 5px;
+    max-width: 50%;
+}
+.phone-main {
+    display: block;
+    margin-top: 32px;
+}
+.phone-main a {
+    display: block;
+    margin-top: 10px;
+}
+
+.all-works-table {
+    position: relative;
+}
+.all-works-table .table-head {
+    padding-right: 68px;
+    display: grid;
+    grid-template-columns: 3fr 2fr;
+}
+
+.all-works-table .head-column-group {
+    display: grid;
+    grid-template-columns: 88px auto;
+}
+.all-works-table .work-item {
+    display: grid;
+    grid-template-columns: 3fr 2fr 68px;
+}
+.all-works-table .work-item-content {
+    grid-template-columns: 88px auto;
+    padding-right: 0;
+}
+.all-works-table .work-item-progress {
+    white-space: nowrap;
+    display: flex;
+    gap: 5px;
+}
+main#all_works{
+    padding-top: 100px;
+}
+
+@media screen and (max-width: 768px) {
+    .all-works-table .table-head {
+        grid-template-columns: auto 60px;
+        align-items: center;
+        position: sticky;
+        top: 96px;
+    }
+    .all-works-table .table-head > .head-column:nth-child(2) {
+        /* display: none; */
+        text-align: center;
+    }
+    .all-works-table .work-item {
+        /* display: flex; */
+        /* flex-wrap: wrap; */
+        grid-template-columns: auto 60px 68px;
+    }
+    .all-works-table .work-item-progress {
+        /* width: 100%; */
+        /* padding-bottom: 10px; */
+        /* order: 1; */
+        text-align: center;
+        justify-content: center;
+    }
+    /* .all-works-table .work-item-content {
+        width: calc(100% - 68px);
+        order: 2;
+    }
+    .all-works-table .work-item button {
+        order: 3;
+    } */
+}
+.modal-body .form-check {
+    padding-left: 0;
+    display: flex;
+    justify-content: space-around;
+}
+.modal-body .form-check .form-check-input {
+    margin-left: 5px;
+}
