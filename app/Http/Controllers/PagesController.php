@@ -125,8 +125,7 @@ class PagesController extends Controller
 
         foreach ($dataTimes as $time) {
             $t = Carbon::parse($time->startDateTime)->format('G:i');
-            if (in_array($t, $dataList))
-                unset($dataList[array_search($t, $dataList)]);
+            unset($dataList[array_search($t, $dataList)]);
         }
         if ($sdate->day === $today->day) {
             foreach ($dataList as $item) {
@@ -198,8 +197,8 @@ class PagesController extends Controller
         $event->startDateTime = $time;
         $event->endDateTime = $time->addMinute(30);
         $event->save();
-        
-        
+
+
         $text = "Новая запись на развал. " . $eventName . " Время: " . $time->addMinute(-30)->format('d-m G:i');
         $this->managerConnect($text);
         return redirect()->back()->with('success', 'Спасибо Вы записаны на развал-схождение');
@@ -906,7 +905,7 @@ class PagesController extends Controller
         $data = [];
         $url = $this::SITE . 'cs/history/' . $orderId . '/' . $RecType;
         $work = $this->send_request_get($url);
-        
+
         $works = collect();
         foreach ($work->Works as $item) {
             if ($item->WorkerName == '1Дефектовано!' || $item->Group == 'Комментарий') {

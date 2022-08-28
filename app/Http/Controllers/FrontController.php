@@ -128,7 +128,7 @@ class FrontController extends Controller
    public function addGoogleDiagnosticOrderNoAuthorization(Request $request)
    {
        $usePhone = $request->phone;
-       $eventName = $request->another_car . ' ' . $usePhone .' Онлайн' . 'Коментарий: ' .$request->question;
+       $eventName = 'Онлайн) ' .$request->another_car . ' ' . $usePhone .' ' . '  ' .$request->question;
        if ($request->day == 'tomorrow')
            $str = Carbon::tomorrow()->format('d-m-Y') . 'T' . $request->time;
        else
@@ -140,7 +140,6 @@ class FrontController extends Controller
        $event->startDateTime = $time;
        $event->endDateTime = $time->addMinute(30);
        $event->save();
-
        $text = "Новая запись на развал. " . $eventName . " Время: " . $time->addMinute(-30)->format('d-m G:i');
        $this->managerConnect2($text);
        return redirect()->back()->with('success', 'Спасибо Вы записаны на развал-схождение');
