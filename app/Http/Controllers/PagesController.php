@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\ACCOUNT;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 
 use Illuminate\Support\Facades\DB;
@@ -114,18 +115,24 @@ class PagesController extends Controller
         if ($sdate->dayOfWeekIso == 7) {
             return [];
         }
+
+
         foreach ($events as $event) {
             if ($event->isAllDayEvent()) {
                 return [];
             }
             $eday = Carbon::parse($event->endDateTime)->format('d-m-Y');
-            if ($event->endDateTime >= $sdate && $eday == $sdate->format('d-m-Y'))
-                $dataTimes->push($event);
+            if ($event->endDateTime >= $sdate && $eday == $sdate->format('d-m-Y')) {
+                $endDateTime = Carbon::parse($event->endDateTime);
+                $startDateTime = Carbon::parse($event->startDateTime);
+                $dataTimes = $this->createEventTimeBy30Minutes($dataTimes, $endDateTime, $startDateTime);
+
+            }
+
         }
 
         foreach ($dataTimes as $time) {
-            $t = Carbon::parse($time->startDateTime)->format('G:i');
-            unset($dataList[array_search($t, $dataList)]);
+            unset($dataList[array_search($time, $dataList)]);
         }
         if ($sdate->day === $today->day) {
             foreach ($dataList as $item) {
@@ -135,6 +142,17 @@ class PagesController extends Controller
             }
         }
         return $dataList;
+    }
+
+    public function createEventTimeBy30Minutes(Collection $dataTimes, Carbon $endDateTime, Carbon $startDateTime)
+    {
+        if ($endDateTime > $startDateTime) {
+            $dataTimes->push($startDateTime->format('G:i'));
+            $startDateTime->addMinute(30);
+            $this->createEventTimeBy30Minutes($dataTimes, $endDateTime, $startDateTime);
+        }
+
+        return $dataTimes;
     }
 
     public function checkAvailableTime(Request $request)
@@ -180,7 +198,7 @@ class PagesController extends Controller
     {
         $user = $this->userInfo();
         $car = $request->car;
-        $eventName = $request->another_car . ' ' . $user->Name . ' ' . $request->question . ' ' .$user->Phone;
+        $eventName = $request->another_car . ' ' . $user->Name . ' ' . $request->question . ' ' . $user->Phone;
         if ($request->day == 'tomorrow')
             $str = Carbon::tomorrow()->format('d-m-Y') . 'T' . $request->time;
         else
@@ -189,7 +207,7 @@ class PagesController extends Controller
         if ($car != 'another')
             foreach (session()->get('cars') as $item)
                 if ($request->car == $item->ID)
-                    $eventName = $item->RegistrationNo . ' > ' . $item->Brand . ' ' . $item->Model . ' ' . $user->Name . '  ' . $request->questioncheckAvailableTime .' ' .$user->Phone;
+                    $eventName = $item->RegistrationNo . ' > ' . $item->Brand . ' ' . $item->Model . ' ' . $user->Name . '  ' . $request->questioncheckAvailableTime . ' ' . $user->Phone;
 
 
         $event = new Event;
@@ -271,7 +289,7 @@ class PagesController extends Controller
         $works = $this->send_request_post($url, $data);
         foreach (session()->get('cars') as $item)
             if ($request->car == $item->ID)
-                $eventName = $item->RegistrationNo . ' > ' . $item->Brand . ' ' . $item->Model . ' ' . $user->Name . '  ' . $request->question .' ' .$user->Phone;
+                $eventName = $item->RegistrationNo . ' > ' . $item->Brand . ' ' . $item->Model . ' ' . $user->Name . '  ' . $request->question . ' ' . $user->Phone;
         $time = Carbon::parse($startTime)->format('d-m G:i');
         $text = "Новая запись на диагностику. " . $eventName . " Время: " . $time;
         $this->managerConnect($text);
@@ -963,11 +981,11 @@ class PagesController extends Controller
             $works = collect();
             foreach ($prWork->Works as $item) {
 //                if ($item->WorkerName == '1Дефектовано!' || $item->Group == 'Комментарий') {
-                    if ($item->Group == 'Талоны') {
-                        dd($item);
-                        $item->Date = Carbon::parse($prWork->Date)->format('d-m-Y');
-                        $works->push($item);
-                    }
+                if ($item->Group == 'Талоны') {
+                    dd($item);
+                    $item->Date = Carbon::parse($prWork->Date)->format('d-m-Y');
+                    $works->push($item);
+                }
 
 //                }
             }
@@ -999,9 +1017,8 @@ class PagesController extends Controller
         $works = [];
         $cars = [];
         $car = [];
-        return view('custom.talon', compact('works', 'cars', 'car' , 'prWorks'));
+        return view('custom.talon', compact('works', 'cars', 'car', 'prWorks'));
     }
-
 
 
 }
