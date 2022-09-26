@@ -4,24 +4,28 @@
 {{-- Content --}}
 @section('content')
 
-    <main  id="all_works">
+    <main id="all_works">
         <section class="block-all-works">
             <div class="wrap">
                 <h1 class="block-title">
-                    Історія робіт та запчастин
+                    Вся історія
                 </h1>
-                <small>Введіть часткову назву роботи або деталі та відобразиться вся історія, пов'язана з цією назвою</small>
+                <small>Введіть часткову назву роботи або деталі та відобразиться вся історія, пов'язана з цією
+                    назвою
+                </small>
                 <div class="block-head-controls">
                     <div class="type-selector" style="margin-bottom: 10px;">
                         <select id="select_car" onchange="selectCar();">
-                            <option value="{{$car->ID}}" selected disabled>{{$car->RegistrationNo}}   {{$car->Brand}} {{$car->Model}}</option>
+                            <option value="{{$car->ID}}" selected
+                                    disabled hidden>{{$car->RegistrationNo}} {{$car->Brand}} {{$car->Model}}</option>
                             @foreach($cars as $car)
-                                <option value="{{$car->ID}}">{{$car->RegistrationNo}} >    {{$car->Brand}} {{$car->Model}}</option>
+                                <option value="{{$car->ID}}">{{$car->RegistrationNo}} {{$car->Brand}} {{$car->Model}}</option>
                             @endforeach
                         </select>
                     </div>
                     <form class="search" id="search_form" method="post" action="#">
-                        <input id="search" type="text" placeholder="Пошук..." value="@if(isset($search)){{$search}}@endif">
+                        <input id="search" type="text" placeholder="Пошук..."
+                               value="@if(isset($search)){{$search}}@endif">
                         <button type="submit"></button>
                     </form>
                 </div>
@@ -48,20 +52,23 @@
                                         @foreach($work->sortByDesc('CarOdometer') as $item)
                                             <div class="work-date-distance {{$loop->iteration == 1 ? 'first-row' : ''}}"
                                                  @if(session('admin') == 1)
-                                                    data-id="{{$item->ID}}"
-                                                    data-type="work"
-                                                    onclick="showModal(this)"
-                                                @endif
+                                                 data-id="{{$item->ID}}"
+                                                 data-type="work"
+                                                 onclick="showModal(this)"
+                                                    @endif
                                             >
-                                                    <span style="color:blue">
-                                                      <b>Робота</b>  <i class="fas fa-tools"></i>
-                                                    </span>
+                                                <span style="color:blue">
+                                                  <b>Виконано</b>  <i class="fas fa-tools"></i>
+                                                </span>
                                                 <span>
-                                                        {{$item->Date}}
-                                                    </span>
+                                                    {{$item->Date->format('d-m-Y')}}
+                                                </span>
                                                 <span>
-                                                        {{$item->CarOdometer}} км
-                                                    </span>
+                                                    {{$item->CarOdometer}} км
+                                                </span>
+                                                @if($car->ID == 0)
+                                                    <span>{{$item->CarName}}</span>
+                                                @endif
                                             </div>
                                             <div class="work-name {{$loop->iteration == 1 ? 'first-row' : ''}}">
                                                 @if($loop->iteration == 1)
@@ -98,12 +105,14 @@
                                                         <b>Деталь</b> <i class="fa fa-cog" aria-hidden="true"></i>
                                                     </span>
                                                 <span>
-                                                        {{$item->Date}}
-                                                    </span>
+                                                    {{$item->Date->format('d-m-Y')}}
+                                                </span>
                                                 <span>
-                                                        {{$item->CarOdometer}} км
-
-                                                    </span>
+                                                    {{$item->CarOdometer}} км
+                                                </span>
+                                                @if($car->ID == 0)
+                                                    <span>{{$item->CarName}}</span>
+                                                @endif
                                             </div>
                                             <div class="work-name {{$loop->iteration == 1 ? 'first-row' : ''}}">
                                                 @if($loop->iteration == 1)
@@ -123,16 +132,39 @@
                                     @endif
                                 </div>
                             @endforeach
+                            @if(!$full)
+                                <button type="button" class="btn btn-info show-more" id="showAllRec"
+                                        onclick="loadAllHistory()">
+                                    Показати всю історію
+                                </button>
+                            @endif
                         @else
-                            <div class="work-item">
-                                <div class="work-item-content">
-                                    <div class="work-date-distance first-row"></div>
-                                    <div class="work-name first-row">
-                                        Немає результатів
+                            @if($is_full)
+                                <div class="work-item">
+                                    <div class="work-item-content">
+                                        <div class="work-date-distance first-row"></div>
+                                        <div class="work-name first-row">
+                                            Немає результатів за останній рік
+                                        </div>
+                                        <div class="work-item-progress first-row">
+                                        </div>
                                     </div>
-                                    <div class="work-item-progress first-row"></div>
                                 </div>
-                            </div>
+                                <button type="button" class="btn btn-info show-more" id="showAllRec"
+                                        onclick="loadAllHistory()">
+                                    Показати всю історію
+                                </button>
+                            @else
+                                <div class="work-item">
+                                    <div class="work-item-content">
+                                        <div class="work-date-distance first-row"></div>
+                                        <div class="work-name first-row">
+                                            Немає результатів
+                                        </div>
+                                        <div class="work-item-progress first-row"></div>
+                                    </div>
+                                </div>
+                            @endif
                         @endif
                     </div>
                 </div>
@@ -156,37 +188,44 @@
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             }
         });
+
         function selectCar() {
             let selected = $('#select_car').val();
             $(".preloader").css('display', 'block');
-            $( "#all_works" ).load( "/index-jobs-selected", { selected: selected }, function() {
+            $("#all_works").load("/index-jobs-selected", {selected: selected}, function () {
                 $(".preloader").css('display', 'none');
             });
-
         }
-        $( "#search_form" ).submit(function( event ) {
+
+        function loadAllHistory() {
+            let selected = document.getElementById('select_car');
+            $("#all_works").load("{{route('all.jobs.full')}}", {selected: selected.value}, function () {
+                $(".preloader").css('display', 'none');
+            });
+        }
+
+        $("#search_form").submit(function (event) {
             event.preventDefault();
             let selected = $("#select_car option:selected").val(),
                 search = $('#search').val();
             $(".preloader").css('display', 'block');
-            $( "#all_works" ).load( "/search-jobs", { selected: selected, search:search }, function() {
+            $("#all_works").load("/search-jobs", {selected: selected, search: search}, function () {
                 $(".preloader").css('display', 'none');
             });
         });
     </script>
     @if(session('admin') == 1)
         <script>
-            function showModal(elem)
-            {
+            function showModal(elem) {
                 let id = elem.getAttribute('data-id'),
                     type = elem.getAttribute('data-type');
-                    // modal = $('#adminModal');
+                // modal = $('#adminModal');
                 $.ajax({
                     method: "POST",
                     url: "/load-admin-modal",
-                    data: { id: id, type:type }
+                    data: {id: id, type: type}
                 })
-                    .done(function( data ) {
+                    .done(function (data) {
                         console.log(data.Description);
                         $('#adminModal > div > div > div.modal-body > div.description > span').html(data.Description);
                         $('#adminModal > div > div > div.modal-body > div.StdHour > span').html(data.StdHour);
@@ -202,7 +241,8 @@
 @endsection
 @section('modal')
     @if(session('admin') == 1)
-        <div class="modal fade" id="adminModal" tabindex="-1" role="dialog" aria-labelledby="adminModal" aria-hidden="true">
+        <div class="modal fade" id="adminModal" tabindex="-1" role="dialog" aria-labelledby="adminModal"
+             aria-hidden="true">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header">

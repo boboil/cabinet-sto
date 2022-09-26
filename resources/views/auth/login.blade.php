@@ -54,13 +54,13 @@
                 </button>
             </form>
             <div class="manager-feedback">
-                <button type="button" class="btn btn-light" data-toggle="modal" data-target="#exampleModal">
-                    Звернутися на підтримку!
+                <button class="nav-btn" type="button" data-toggle="modal" data-target="#diagnosticModal">
+                    Записатися на розвал-сходження
                 </button>
             </div>
             <div class="manager-feedback">
-                <button class="nav-btn" type="button" data-toggle="modal" data-target="#diagnosticModal">
-                    Записатися на розвал-сходження
+                <button type="button" class="btn btn-light" data-toggle="modal" data-target="#exampleModal">
+                    Підтримка!
                 </button>
             </div>
         </div>

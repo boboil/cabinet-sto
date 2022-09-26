@@ -10,7 +10,7 @@
     <title>Gold Auto</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
     <link rel="stylesheet" type="text/css" href="{{asset('css/styles.css?v=2.2')}}">
-    <link rel="stylesheet" media="screen, print" href="{{asset('css/custom.css?v=2.2')}}">
+    <link rel="stylesheet" media="screen, print" href="{{asset('css/custom.css?v=2.3')}}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/6.6.9/sweetalert2.min.css">
     <link rel="shortcut icon" href="https://www.sto.sumy.ua/wp-content/uploads/fbrfg/favicon.ico">
@@ -59,17 +59,17 @@
                 <button type="button" data-toggle="modal" class="btn btn-warning" data-target="#diagnosticModal" style="margin: 1rem 0 1rem 0">
                     Записатись
                 </button>
+                <a href="{{route('all.jobs')}}">
+                    <b>Вся історія</b>
+                </a>
                 <a href="{{route('recommendation')}}" style="color: red">
-                    Рекомендації/Повідомлення
+                   <b>Рекомендації</b>
                 </a>
                 <a href="{{route('index.acts')}}">
-                    Акти виконаних робіт
-                </a>
-                <a href="{{route('all.jobs')}}">
-                    Історія робіт та запчастин
+                    <b>Акти виконаних робіт</b>
                 </a>
                 <a href="{{route('talon')}}">
-                    Талони
+                    <b>Талони</b>
                 </a>
                 {{--<a href="#">--}}
                     {{--Мои данные--}}
@@ -77,13 +77,13 @@
                 <a href="{{ url('/logout') }}"
                    onclick="event.preventDefault();
                                                      document.getElementById('logout-form').submit();">
-                    Вийти
+                   <b>Вийти</b>
                 </a>
                 <form id="logout-form" action="{{ route('client.logout') }}" method="POST" style="display: none;">
                     {{ csrf_field() }}
                 </form>
-                <a href="tel:+380662050303">(066) 205 03 03</a>
-                <a href="tel:+380990206700 ">(099) 02 06 700</a>
+                <a href="tel:+380662050303">(066) 205 03 03 - Олександр</a>
+                <a href="tel:+380990206700 ">(099) 02 06 700 - Дмитро</a>
                 <button type="button" class="btn btn-info" onclick="updateData();">
                     Оновити дані
                 </button>

@@ -22,14 +22,12 @@ Route::get('main', 'PagesController@main')->name('main');
 Route::get('acts/{id}/{RecType}', 'PagesController@acts')->name('acts');
 Route::any('index-acts', 'PagesController@indexActs')->name('index.acts');
 Route::post('index-acts-selected', 'PagesController@indexActsSelected')->name('index.acts.selected');
-Route::get('all-jobs', 'PagesController@allJobs')->name('all.jobs');
+
 Route::get('recommendation', 'PagesController@recommendation')->name('recommendation');
 Route::get('talon', 'PagesController@talon')->name('talon');
 Route::get('acts_talon/{id}/{RecType}', 'PagesController@actstalon')->name('acts.talon');
 Route::any('recommendation-all', 'PagesController@recommendationAll')->name('recommendationAll');
-Route::post('index-jobs-selected', 'PagesController@indexJobsSelected')->name('index.jobs.selected');
-Route::post('index-recomendation-selected', 'PagesController@indexActsSelectedRecomendation')->name('index.jobs.selected');
-Route::post('search-jobs', 'PagesController@searchJobs')->name('search.jobs');
+
 Route::post('search-recomendation', 'PagesController@searchRecomendation')->name('search.recomendation');
 Route::any('login-client', 'FrontController@loginClient')->name('login.client');
 Route::any('logout-client', 'FrontController@logoutClient')->name('client.logout');
@@ -46,6 +44,13 @@ Route::post('add-google-diagnostic-order', 'PagesController@addGoogleDiagnosticO
 Route::post('add-google-diagnostic-order-noAuthorization', 'FrontController@addGoogleDiagnosticOrderNoAuthorization')->name('add.google.diagnostic.order.noAuthorization');
 Route::get('calendar', 'FrontController@calendar')->name('calendar');
 Route::get('aoth', 'FrontController@aoth')->name('aoth');
+Route::get('buy-talons', 'PagesController@buyTalon')->name('buyTalon');
+
+Route::get('all-jobs', 'JobsController@index')->name('all.jobs');
+Route::any('all-jobs/full', 'JobsController@indexFull')->name('all.jobs.full');
+Route::post('index-jobs-selected', 'JobsController@index')->name('index.jobs.selected');
+Route::post('index-recomendation-selected', 'PagesController@indexActsSelectedRecomendation')->name('index.jobs.selected');
+Route::post('search-jobs', 'JobsController@search')->name('search.jobs');
 
 Auth::routes();
 

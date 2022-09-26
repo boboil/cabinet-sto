@@ -13,23 +13,23 @@
                     {{session()->get('name', 'Клиент')}}
                 </div>
                 <button class="nav-btn" type="button" data-toggle="modal" data-target="#diagnosticModal">
-                    Записатись
+                    <b>Записатись</b>
+                </button>
+                <button class="nav-btn " onclick="window.location.href = '{{route('all.jobs')}}'">
+                    Вся історія
                 </button>
                 <button class="nav-btn" onclick="window.location.href = '{{route('recommendation')}}'">
-                    Рекомендації/Повідомлення
+                    Рекомендації
                 </button>
                 <button class="nav-btn " onclick="window.location.href = '{{route('index.acts')}}'">
                     Акти виконаних робіт
                 </button>
-                <button class="nav-btn " onclick="window.location.href = '{{route('all.jobs')}}'">
-                    Історія робіт та запчастин
-                </button>
                 <button class="nav-btn " onclick="window.location.href = '{{route('talon')}}'">
-                    Талони
+                    Мої талони
                 </button>
                 <div class="phone-main">
-                    <a href="tel:+380662050303">(066) 205 03 03</a>
-                    <a href="tel:+380990206700 ">(099) 02 06 700</a>
+                    <a href="tel:+380662050303">(066) 205 03 03 - Олександр</a>
+                    <a href="tel:+380990206700 ">(099) 02 06 700 - Дмитро</a>
                 </div>
 
             </div>
