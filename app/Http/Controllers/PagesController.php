@@ -2,16 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ACCOUNT;
+use Arturgrigio\GoogleCalendar\Event;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
-
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use phpDocumentor\Reflection\Types\Object_;
-use Arturgrigio\GoogleCalendar\Event;
 
 
 class PagesController extends Controller
@@ -83,8 +79,8 @@ class PagesController extends Controller
     public function googleCheckAvailableTime(Request $request)
     {
         $dataList = [
-            '09:00',
-            '09:30',
+            '9:00',
+            '9:30',
             '10:00',
             '10:30',
             '11:00',
@@ -131,6 +127,7 @@ class PagesController extends Controller
 
         }
 
+
         foreach ($dataTimes as $time) {
             unset($dataList[array_search($time, $dataList)]);
         }
@@ -151,7 +148,6 @@ class PagesController extends Controller
             $startDateTime->addMinute(30);
             $this->createEventTimeBy30Minutes($dataTimes, $endDateTime, $startDateTime);
         }
-
         return $dataTimes;
     }
 
@@ -363,8 +359,6 @@ class PagesController extends Controller
 
     public function main()
     {
-//        $acc = ACCOUNT::all();
-//        dd($acc);
         if (!session()->has('users')) {
             $url = $this::SITE . 'cs/user';
             $user = $this->send_request_get($url);
@@ -467,7 +461,12 @@ class PagesController extends Controller
         $url = $this::SITE . 'cs/usercars';
         $cars = $this->send_request_get($url);
         $cars = collect($cars);
-        $car = $cars->where('ID', $request->selected)->first();
+        if ($request->input('selected') == 0) {
+            return $this->recommendation();
+        }
+        $allCar = json_decode('{"ID":0, "Brand":"Всі автомобілі", "Model":"", "RegistrationNo":""}');
+        $cars->push($allCar);
+        $car = $cars->where('ID', $request->input('selected'))->first();
         $cars = $cars->filter(function ($item, $key) use ($car) {
             if ($item->RegistrationNo !== $car->RegistrationNo) {
                 return $item;
@@ -480,63 +479,21 @@ class PagesController extends Controller
                 $wok->CarName = $datum['CarName'];
                 $wok->RegistrationNo = Str::words($wok->CarName, 1, '');
                 $wok->CarOdometer = $datum['CarOdometer'];
-                if ($wok->RegistrationNo == $car->RegistrationNo)
+                $wok->Date = Carbon::parse($wok->Date);
+                if ($wok->RegistrationNo == $car->RegistrationNo) {
                     $works->push($wok);
+                }
             }
-
         }
         $to = Carbon::now()->addMonth(-3);
-        $works = $works->where('Date', '<', $to);
+        $works = $works->where('Date', '>', $to);
         return view('custom.recomendation', compact('works', 'cars', 'car'));
     }
 
-    public function allJobs()
-    {
-        $url = $this::SITE . 'cs/usercars';
-        $cars = $this->send_request_get($url);
-        $cars = collect($cars);
-        $car = $cars->first();
-        $cars = $cars->filter(function ($item, $key) use ($car) {
-            if ($item->RegistrationNo !== $car->RegistrationNo) {
-                return $item;
-            }
-        });
-        $data = $this->prepareData();
-        $works = collect();
-        $products = collect();
-
-        foreach ($data as $datum) {
-            foreach ($datum['woks'] as $wok) {
-                $wok->CarName = $datum['CarName'];
-                $wok->RegistrationNo = Str::words($wok->CarName, 1, '');
-                $wok->CarOdometer = $datum['CarOdometer'];
-                if ($wok->RegistrationNo == $car->RegistrationNo)
-                    $works->push($wok);
-            }
-            foreach ($datum['products'] as $product) {
-                $product->CarName = $datum['CarName'];
-                $product->RegistrationNo = Str::words($wok->CarName, 1, '');
-                $product->CarOdometer = $datum['CarOdometer'];
-                if ($product->RegistrationNo == $car->RegistrationNo)
-                    $products->push($product);
-            }
-        }
-        $works = $works->groupBy('Name');
-        $products = $products->groupBy('Name');
-        return view('custom.all_jobs', compact('works', 'products', 'cars', 'car'));
-    }
 
     public function recommendation()
     {
-        $url = $this::SITE . 'cs/usercars';
-        $cars = $this->send_request_get($url);
-        $cars = collect($cars);
-        // $car = $cars->first();
-        // $cars = $cars->filter(function ($item, $key) use($car) {
-        //     if ($item->RegistrationNo !== $car->RegistrationNo) {
-        //         return $item;
-        //     }
-        // });
+        list($cars, $car) = $this->prepareUserCars();
         $data = $this->prepareDataForRecomendation();
         $works = collect();
 
@@ -545,137 +502,41 @@ class PagesController extends Controller
                 $wok->CarName = $datum['CarName'];
                 $wok->RegistrationNo = Str::words($wok->CarName, 1, '');
                 $wok->CarOdometer = $datum['CarOdometer'];
-                // if ($wok->RegistrationNo == $car->RegistrationNo)
+                $wok->Date = Carbon::parse($wok->Date);
                 $works->push($wok);
             }
         }
 
-        $to = Carbon::now()->addMonth(-3)->format('d-m-Y');
-
+        $to = Carbon::now()->addMonth(-3);
         $works = $works->where('Date', '>', $to);
         $works = $works->sortByDesc('Date');
-
-        $car = collect();
-        $car->ID = 0;
-        $car->Brand = 'По всем автомобилям';
-        $car->Model = '';
-        $car->RegistrationNo = '';
 
         return view('custom.recomendation', compact('works', 'cars', 'car'));
     }
 
     public function recommendationAll(Request $request)
     {
-        $url = $this::SITE . 'cs/usercars';
-        $cars = $this->send_request_get($url);
-        $cars = collect($cars);
+        list($cars, $car) = $this->prepareUserCars(true, $request);
         $data = $this->prepareDataForRecomendation();
         $works = collect();
-
         foreach ($data as $datum) {
             foreach ($datum['woks'] as $wok) {
                 $wok->CarName = $datum['CarName'];
                 $wok->RegistrationNo = Str::words($wok->CarName, 1, '');
                 $wok->CarOdometer = $datum['CarOdometer'];
-                $works->push($wok);
+                $wok->Date = Carbon::parse($wok->Date);
+                if ($car->ID == 0) {
+                    $works->push($wok);
+                }
+                if ($car->ID != 0 && $wok->RegistrationNo == $car->RegistrationNo) {
+                    $works->push($wok);
+                }
             }
-
         }
-
         $works = $works->sortByDesc('Date');
-        $car = collect();
-        $car->ID = 0;
-        $car->Brand = 'По всем автомобилям';
-        $car->Model = '';
-        $car->RegistrationNo = '';
-
         return view('custom.recomendation', compact('works', 'cars', 'car'));
     }
 
-    public function indexJobsSelected(Request $request)
-    {
-        $url = $this::SITE . 'cs/usercars';
-        $cars = $this->send_request_get($url);
-        $cars = collect($cars);
-        $car = $cars->where('ID', $request->selected)->first();
-        $cars = $cars->filter(function ($item, $key) use ($car) {
-            if ($item->RegistrationNo !== $car->RegistrationNo) {
-                return $item;
-            }
-        });
-        $data = $this->prepareData();
-        $works = collect();
-        $products = collect();
-
-        foreach ($data as $datum) {
-            foreach ($datum['woks'] as $wok) {
-                $wok->CarName = $datum['CarName'];
-                $wok->RegistrationNo = Str::words($wok->CarName, 1, '');
-                $wok->CarOdometer = $datum['CarOdometer'];
-                if ($wok->RegistrationNo == $car->RegistrationNo)
-                    $works->push($wok);
-            }
-            foreach ($datum['products'] as $product) {
-                $product->CarName = $datum['CarName'];
-                $product->RegistrationNo = Str::words($wok->CarName, 1, '');
-                $product->CarOdometer = $datum['CarOdometer'];
-                if ($product->RegistrationNo == $car->RegistrationNo)
-                    $products->push($product);
-            }
-        }
-        $works = $works->groupBy('Name');
-        $products = $products->groupBy('Name');
-        return view('custom.all_jobs', compact('works', 'products', 'cars', 'car'));
-    }
-
-    public function searchJobs(Request $request)
-    {
-        $url = $this::SITE . 'cs/usercars';
-        $cars = $this->send_request_get($url);
-        $cars = collect($cars);
-        $car = $cars->where('ID', $request->selected)->first();
-        $cars = $cars->filter(function ($item, $key) use ($car) {
-            if ($item->RegistrationNo !== $car->RegistrationNo) {
-                return $item;
-            }
-        });
-        $data = $this->prepareData();
-        $works = collect();
-        $products = collect();
-
-        foreach ($data as $datum) {
-            foreach ($datum['woks'] as $wok) {
-                $wok->CarName = $datum['CarName'];
-                $wok->RegistrationNo = Str::words($wok->CarName, 1, '');
-                $wok->CarOdometer = $datum['CarOdometer'];
-                if ($wok->RegistrationNo == $car->RegistrationNo)
-                    $works->push($wok);
-            }
-            foreach ($datum['products'] as $product) {
-                $product->CarName = $datum['CarName'];
-                $product->RegistrationNo = Str::words($wok->CarName, 1, '');
-                $product->CarOdometer = $datum['CarOdometer'];
-                if ($product->RegistrationNo == $car->RegistrationNo)
-                    $products->push($product);
-            }
-        }
-        $search = $request->search;
-        $works = $works->filter(function ($item, $key) use ($search) {
-            $str = mb_stripos($item->Name, $search, 0, 'UTF-8');
-            if ($str !== false) {
-                return $item;
-            }
-        });
-        $products = $products->filter(function ($item, $key) use ($search) {
-            $str = mb_stripos($item->Name, $search, 0, 'UTF-8');
-            if ($str !== false) {
-                return $item;
-            }
-        });
-        $works = $works->groupBy('Name');
-        $products = $products->groupBy('Name');
-        return view('custom.all_jobs', compact('works', 'products', 'cars', 'car', 'search'));
-    }
 
     public function workgroup()
     {
@@ -788,18 +649,13 @@ class PagesController extends Controller
         if (!session()->has('prepareAllData')) {
             $url = $this::SITE . 'cs/history';
             $orders = $this->send_request_get($url);
-
             $data = [];
             foreach ($orders as $order) {
                 $no = preg_replace('/\d/', '', $order->No);
-
                 if ($no == 'W') {
                     if ($order->DocCode == 'A' || $order->DocCode == 'F') {
-
                         $url = $this::SITE . 'cs/history/' . $order->ID . '/' . $order->RecType;
-
                         $work = $this->send_request_get($url);
-
                         $data[] = $work;
                     }
                 }
@@ -845,10 +701,31 @@ class PagesController extends Controller
 
     }
 
+    public function prepareAllDataForRecomendations()
+    {
+        if (!session()->has('prepareAllDataForRecomendations')) {
+            $url = $this::SITE . 'cs/history';
+            $orders = $this->send_request_get($url);
+            $data = [];
+            foreach ($orders as $order) {
+                $no = preg_replace('/\d/', '', $order->No);
+                if ($no == 'W') {
+                    $url = $this::SITE . 'cs/history/' . $order->ID . '/' . $order->RecType;
+                    $work = $this->send_request_get($url);
+                    $data[] = $work;
+                }
+            }
+            session()->put('prepareAllDataForRecomendations', $data);
+        } else {
+            $data = session()->get('prepareAllDataForRecomendations');
+        }
+        return $data;
+    }
+
     public function prepareDataForRecomendation()
     {
         $data = [];
-        $prWorks = $this->prepareAllData();
+        $prWorks = $this->prepareAllDataForRecomendations();
         foreach ($prWorks as $prWork) {
             $works = collect();
             foreach ($prWork->Works as $item) {
@@ -857,7 +734,6 @@ class PagesController extends Controller
                         $item->Date = Carbon::parse($prWork->Date)->format('d-m-Y');
                         $works->push($item);
                     }
-
                 }
             }
             $products = collect();
@@ -882,7 +758,6 @@ class PagesController extends Controller
     {
         $data = [];
         $url = $this::SITE . 'cs/history/' . $orderId . '/' . $RecType;
-//        $url = $this::SITE . 'cs/history/11096/1';
         $work = $this->send_request_get($url);
         $works = collect();
         foreach ($work->Works as $item) {
@@ -907,11 +782,7 @@ class PagesController extends Controller
 
         $data['woks'] = $works;
         $data['products'] = $products;
-        $data['date'] = Carbon::parse($work->Date)->format('d-m-Y');
-        $data['year'] = Carbon::parse($work->Date)->format('Y');
-        $data['CarOdometer'] = $work->CarOdometer;
-        $data['CarName'] = $work->CarName;
-        $data['orderId'] = $orderId;
+        $data = $this->preWorksForPage($work, $data, $orderId);
         $data['actId'] = $work->No;
         $data['RecType'] = $RecType;
 
@@ -935,90 +806,90 @@ class PagesController extends Controller
         }
 
         $data['woks'] = $works;
-        $data['date'] = Carbon::parse($work->Date)->format('d-m-Y');
-        $data['year'] = Carbon::parse($work->Date)->format('Y');
-        $data['CarOdometer'] = $work->CarOdometer;
-        $data['CarName'] = $work->CarName;
-        $data['orderId'] = $orderId;
+        $data = $this->preWorksForPage($work, $data, $orderId);
         $data['RecType'] = $RecType;
         $data['sumRec'] = $work->WorkAmount->Discount;
         return $data;
     }
 
-    public function prepareAllDataForTalone()
-    {
-        if (!session()->has('prepareAllDataForTalone')) {
-            $url = $this::SITE . 'cs/history';
-            $orders = $this->send_request_get($url);
-            dd($orders);
-            $data = [];
-            foreach ($orders as $order) {
-                $no = preg_replace('/\d/', '', $order->No);
-
-                if ($no == 'W') {
-                    if ($order->DocCode == 'A' || $order->DocCode == 'F') {
-
-                        $url = $this::SITE . 'cs/history/' . $order->ID . '/' . $order->RecType;
-
-                        $work = $this->send_request_get($url);
-
-                        $data[] = $work;
-                    }
-                }
-            }
-            session()->put('prepareAllDataForTalone', $data);
-        } else {
-            $data = session()->get('prepareAllDataForTalone');
-        }
-        return $data;
-    }
-
-    public function prepareAllDataTalon()
-    {
-        $data = [];
-        $prWorks = $this->prepareAllDataForTalone();
-        foreach ($prWorks as $prWork) {
-            $works = collect();
-            foreach ($prWork->Works as $item) {
-//                if ($item->WorkerName == '1Дефектовано!' || $item->Group == 'Комментарий') {
-                if ($item->Group == 'Талоны') {
-                    dd($item);
-                    $item->Date = Carbon::parse($prWork->Date)->format('d-m-Y');
-                    $works->push($item);
-                }
-
-//                }
-            }
-            $products = collect();
-//            foreach ($prWork->Products as $item) {
-//                $item->Date = Carbon::parse($prWork->Date)->format('d-m-Y');
-//                dd($item);
-//                $products->push($item);
-//            }
-            $data[$prWork->ID]['woks'] = $works;
-            $data[$prWork->ID]['products'] = $products;
-            $data[$prWork->ID]['date'] = Carbon::parse($prWork->Date)->format('d-m-Y');
-            $data[$prWork->ID]['year'] = Carbon::parse($prWork->Date)->format('Y');
-            $data[$prWork->ID]['CarOdometer'] = $prWork->CarOdometer;
-            $data[$prWork->ID]['CarName'] = $prWork->CarName;
-            $data[$prWork->ID]['orderId'] = $prWork->ID;
-            $data[$prWork->ID]['actId'] = $prWork->No;
-            $data[$prWork->ID]['RecType'] = $prWork->RecType;
-        }
-        return $data;
-    }
-
     public function talon()
     {
-        $url = $this::SITE . 'cs/group';
-//        dd($url);
-        $prWorks = $this->prepareAllDataTalon();
-        dd($prWorks);
-        $works = [];
+        $array = $this->prepareAllData();
+        $works = collect();
+        foreach ($array as $item) {
+            foreach ($item->Works as $work) {
+                $work->Date = $item->Date;
+                $work->Year = Carbon::parse($item->Date)->format('Y');
+                $work->usage = false;
+                $works->push($work);
+            }
+
+        }
+        $tickets = $works->where('Group', 'Талони');
+        foreach ($works as $work) {
+            foreach ($tickets as $ticket) {
+                $pos = str_contains($work->Description, $ticket->Code);
+                if ($pos === true) {
+                    $ticket->usage = true;
+                }
+            }
+        }
+        $usedTickets = $tickets->where('usage', true)->groupBy('Year');
+        $unusedTickets = $tickets->where('usage', false)->groupBy('Year');
         $cars = [];
         $car = [];
-        return view('custom.talon', compact('works', 'cars', 'car', 'prWorks'));
+        return view('custom.talon', compact('usedTickets', 'unusedTickets', 'cars', 'car'));
     }
 
+    public function buyTalon()
+    {
+        $url = $this::SITE . 'cs/workgroup/63';
+        $works = $this->send_request_get($url);
+        dd($works);
+
+    }
+
+    /**
+     * @param mixed $work
+     * @param array $data
+     * @param $orderId
+     * @return array
+     */
+    protected function preWorksForPage($work, $data, $orderId)
+    {
+        $data['date'] = Carbon::parse($work->Date)->format('d-m-Y');
+        $data['year'] = Carbon::parse($work->Date)->format('Y');
+        $data['CarOdometer'] = $work->CarOdometer;
+        $data['CarName'] = $work->CarName;
+        $data['orderId'] = $orderId;
+        return $data;
+    }
+
+    /**
+     * @param Request $request
+     * @param $isAllCars boolean
+     * @return array
+     */
+    public function prepareUserCars($isAllCars = true, Request $request = null)
+    {
+        $url = $this::SITE . 'cs/usercars';
+        $cars = $this->send_request_get($url);
+        $cars = collect($cars);
+        if ($isAllCars) {
+            $car = json_decode('{"ID":0, "Brand":"Всі автомобілі", "Model":"", "RegistrationNo":""}');
+            $cars->push($car);
+        }
+        if (isset($request) && $request->input('selected')) {
+            $car = $cars->where('ID', $request->input('selected'))->first();
+        } else {
+            $car = $cars->last();
+        }
+        $key = $cars->search(function ($item) use ($car) {
+            return $item->ID == $car->ID;
+        });
+
+        $cars->forget($key);
+        return array($cars, $car);
+    }
 
 }
