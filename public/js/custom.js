@@ -79,3 +79,10 @@ function selectDiagnostic() {
         .siblings()
         .removeClass('show active');
 }
+
+const cart = document.querySelector('.cart');
+if (cart){
+    document.querySelector('.cart-btn').addEventListener('click', () => {
+        cart.classList.toggle('open');
+    });
+}

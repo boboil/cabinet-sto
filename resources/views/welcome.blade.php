@@ -7,7 +7,7 @@
         <section class="block-auth">
             <div class="auth-popup">
                 {{--<div class="auth-popup-logo">--}}
-                    {{--<a href="{{route('main')}}"><img src="{{asset('img/logo.png')}}" alt="" width="72"></a>--}}
+                {{--<a href="{{route('main')}}"><img src="{{asset('img/logo.png')}}" alt="" width="72"></a>--}}
                 {{--</div>--}}
                 <div class="auth-popup-title">
                     {{session()->get('name', 'Клиент')}}
@@ -35,21 +35,40 @@
             </div>
         </section>
         <div id="example">
-            <example inline-template/>
+
         </div>
     </div>
 @endsection
 @section('scripts')
-    <script>
-        $.ajax({
-            method: "GET",
-            url: "/prepare-all-data",
-            beforeSend: function( xhr ) {
-                $(".preloader").css('display', 'block');
-            }
-        })
-            .done(function(  ) {
+    <script async>
+        $(".preloader").css('display', 'block');
+        fetch('/prepare-all-data')
+            .then((response) => {
+                return response.json();
+            })
+            .then((data) => {
                 $(".preloader").css('display', 'none');
-            });
+            }).then(() => {
+            @if (\Session::get('password') == \Session::get('phone'))
+            Swal.fire({
+                icon: 'error',
+                title: 'Попередження',
+                text: 'Ваш пароль встановлено за замовчуванням будь ласка змініть його',
+                showConfirmButton: false,
+                footer: '<a href="{{route('index.changePassword')}}"><b>Натисніть щоб перейти до зміна пароля</b></a>'
+            })
+                {{--Swal.fire({--}}
+                    {{--title: '<strong>HTML <u>example</u></strong>',--}}
+                    {{--html:--}}
+                    {{--'You can use <b>bold text</b>, ' +--}}
+                    {{--'<a href="//sweetalert2.github.io">links</a> ' +--}}
+                    {{--'and other HTML tags',--}}
+                    {{--// title: 'Ваш пароль встановлено за замовчуванням будь ласка змініть його',--}}
+                    {{--icon: 'warning',--}}
+                    {{--html:'<a href="{{route('index.changePassword')}}">Зміна пароля</a>',--}}
+                    {{--showConfirmButton: false,--}}
+                {{--});--}}
+            @endif
+        });
     </script>
 @endsection

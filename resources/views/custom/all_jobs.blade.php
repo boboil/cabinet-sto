@@ -57,9 +57,15 @@
                                                  onclick="showModal(this)"
                                                     @endif
                                             >
-                                                <span style="color:blue">
-                                                  <b>Виконано</b>  <i class="fas fa-tools"></i>
-                                                </span>
+                                                @if($item->Variant == 'W')
+                                                    <span style="color:blue">
+                                                        <b>Виконано</b>  <i class="fas fa-tools"></i>
+                                                    </span>
+                                                @else
+                                                    <span style="color:green">
+                                                        <b>Деталь</b> <i class="fa fa-cog" aria-hidden="true"></i>
+                                                    </span>
+                                                @endif
                                                 <span>
                                                     {{$item->Date->format('d-m-Y')}}
                                                 </span>

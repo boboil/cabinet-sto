@@ -71,9 +71,9 @@
                 <a href="{{route('talon')}}">
                     <b>Талони</b>
                 </a>
-                {{--<a href="#">--}}
-                    {{--Мои данные--}}
-                {{--</a>--}}
+                <a href="{{route('index.changePassword')}}">
+                    <b>Зміна пароля</b>
+                </a>
                 <a href="{{ url('/logout') }}"
                    onclick="event.preventDefault();
                                                      document.getElementById('logout-form').submit();">
@@ -112,6 +112,16 @@
             timer: 2500,
             title: '{!! \Session::get('success') !!}',
             icon: 'success',
+            showConfirmButton: false,
+        });
+    </script>
+@endif
+@if (\Session::has('error'))
+    <script>
+        Swal.fire({
+            timer: 2500,
+            title: '{!! \Session::get('error') !!}',
+            icon: 'error',
             showConfirmButton: false,
         });
     </script>

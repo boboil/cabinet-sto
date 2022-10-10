@@ -14,19 +14,19 @@ class JobsController extends Controller
         $carController = new CarsController();
         $api = new ApiController();
         list($cars, $car) = $carController->prepareUserCars(false, $request->input('selected') ? $request : null);
-        $data = $api->prepareData();
+        $data = $api->prepareJobsData();
         list($works, $products) = $this->prepareData($data, $car);
         $year_ago = Carbon::now()->addYear(-1);
         if ($works || $products) {
             $is_full = true;
         }
         if ($full) {
-            $works = $works->groupBy('Name')->sortBy('Date');
-            $products = $products->groupBy('Name')->sortBy('Date');
+            $works = $works->sortByDesc('Date')->groupBy('Name');
+            $products = $products->sortByDesc('Date')->groupBy('Name');
             $is_full = false;
         } else {
-            $works = $works->where('Date', '>', $year_ago)->groupBy('Name')->sortBy('Date');
-            $products = $products->where('Date', '>', $year_ago)->groupBy('Name')->sortBy('Date');
+            $works = $works->where('Date', '>', $year_ago)->sortByDesc('Date')->groupBy('Name');
+            $products = $products->where('Date', '>', $year_ago)->sortByDesc('Date')->groupBy('Name');
         }
         return view('custom.all_jobs', compact('works', 'products', 'cars', 'car', 'full', 'is_full'));
     }
@@ -61,8 +61,8 @@ class JobsController extends Controller
                 return $item;
             }
         });
-        $works = $works->groupBy('Name');
-        $products = $products->groupBy('Name');
+        $works = $works->sortByDesc('Date')->groupBy('Name');
+        $products = $products->sortByDesc('Date')->groupBy('Name');
         return view('custom.all_jobs', compact('works', 'products', 'cars', 'car', 'search',  'full', 'is_full'));
     }
 
@@ -81,6 +81,7 @@ class JobsController extends Controller
                 $wok->RegistrationNo = Str::words($wok->CarName, 1, '');
                 $wok->CarOdometer = $datum['CarOdometer'];
                 $wok->Date = Carbon::parse($wok->Date);
+                $wok->Variant = 'W';
                 if ($car->ID !== 0) {
                     if ($wok->RegistrationNo == $car->RegistrationNo) {
                         $works->push($wok);
@@ -94,12 +95,13 @@ class JobsController extends Controller
                 $product->RegistrationNo = Str::words($wok->CarName, 1, '');
                 $product->CarOdometer = $datum['CarOdometer'];
                 $product->Date = Carbon::parse($product->Date);
+                $product->Variant = 'P';
                 if ($car->ID !== 0) {
                     if ($product->RegistrationNo == $car->RegistrationNo) {
-                        $products->push($product);
+                        $works->push($product);
                     }
                 } else {
-                    $products->push($product);
+                    $works->push($product);
                 }
 
             }

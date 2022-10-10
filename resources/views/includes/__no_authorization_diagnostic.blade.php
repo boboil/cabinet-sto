@@ -7,7 +7,7 @@
 {{--                <option value="another">Другой автомобиль</option>--}}
 {{--            </select>--}}
             <input type="text" class="form-control" id="google_calendar_car_input" name="another_car"
-                   placeholder="Введіть модель та рік авто" style=" margin-top: 10px">
+                   placeholder="Введіть модель та рік авто" style=" margin-top: 10px" required>
 
             <div class="form-check" style="margin-top: 10px">
                 <div>
@@ -15,12 +15,12 @@
                     {{--<input type="radio" class="form-check-input" name="day" onchange="syncTimeGoogle('today');"--}}
                     {{--value="today" id="todayG">--}}
                     <input type="radio" class="btn-check" name="day" id="todayG" autocomplete="off"
-                           onchange="syncTimeGoogle('today');" value="today">
+                           onchange="syncTimeGoogle('today');" value="today" required>
                     <label class="btn btn-secondary" for="todayG">Сьогодні</label>
                 </div>
                 <div>
                     <input type="radio" class="btn-check" name="day" id="tomorrowG" autocomplete="off"
-                           onchange="syncTimeGoogle('tomorrow');" value="tomorrow">
+                           onchange="syncTimeGoogle('tomorrow');" value="tomorrow" required>
                     <label class="btn btn-secondary" for="tomorrowG">Завтра</label>
 
                     {{--<label class="form-check-label" for="tomorrowG">Завтра</label>--}}
@@ -31,11 +31,11 @@
             <div class="form-group">
                 <label for="question">Час</label>
                 {{--<input type="time" class="form-control" name="time" list="googleTimeList" min="10:00" max="16:00" id="googleTime" step="3600" disabled>--}}
-                <select class="form-control" name="time" id="googleTime" disabled>
+                <select class="form-control" name="time" id="googleTime" disabled required>
                     <option value="10:00">10:00</option>
                 </select>
                 <label for="question">Опишіть коротко почну звернення, свій біль:)</label>
-                <textarea class="form-control" name="question" id="question" rows="3"></textarea>
+                <textarea class="form-control" name="question" id="question" rows="3" required></textarea>
             </div>
         </div>
     </div>

@@ -20,11 +20,11 @@
                             @endforeach
                         </select>
                     </div>
-{{--                    <form class="search" id="search_form" method="post" action="#">--}}
-{{--                        <input id="search" type="text" placeholder="Пошук..."--}}
-{{--                               value="@if(isset($search)){{$search}}@endif">--}}
-{{--                        <button type="submit"></button>--}}
-{{--                    </form>--}}
+                    {{--                    <form class="search" id="search_form" method="post" action="#">--}}
+                    {{--                        <input id="search" type="text" placeholder="Пошук..."--}}
+                    {{--                               value="@if(isset($search)){{$search}}@endif">--}}
+                    {{--                        <button type="submit"></button>--}}
+                    {{--                    </form>--}}
                 </div>
 
                 <div class="all-works-table">
@@ -51,7 +51,8 @@
                                         <div class="work-name first-row">
                                             {{$item->Name}}
                                             @if($item->Notes)
-                                                <br>Примітка: <small>{{$item->Notes}}</small>
+                                                <br>Примітка:
+                                                <small>{{$item->Notes}}</small>
                                             @endif
                                         </div>
                                     @endforeach
