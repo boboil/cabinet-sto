@@ -122,7 +122,6 @@ class PagesController extends Controller
                 $endDateTime = Carbon::parse($event->endDateTime);
                 $startDateTime = Carbon::parse($event->startDateTime);
                 $dataTimes = $this->createEventTimeBy30Minutes($dataTimes, $endDateTime, $startDateTime);
-
             }
 
         }
@@ -251,6 +250,9 @@ class PagesController extends Controller
             $startTime = Carbon::today()->addDay(1)->format('Y-m-d') . 'T' . $request->time . ':00';
             $finishTime = Carbon::today()->addDay(1)->format('Y-m-d') . 'T' . Carbon::parse($startTime)->addHours(1)->format('h:i') . ':00';
         }
+        if ($request->input('car') == 0) {
+            return redirect()->back()->with('error', 'Для запису потрібно обрати автомобіль!');
+        }
         $data = [
             'Name' => $user->Name,
             'Phone' => $user->Phone,
@@ -258,7 +260,7 @@ class PagesController extends Controller
             'Address' => '',
             'Notes' => 'Онлайн запись',
             'Delivery' => '',
-            'UserCarID' => $request->car,
+            'UserCarID' => $request->input('car'),
 //            'UserCarOdometr' => $car->Odometer,
             'StoPostID' => 99,
             'RemTypeID' => 6,
@@ -413,7 +415,7 @@ class PagesController extends Controller
         $group = $collection->groupBy('year');
         $car = collect();
         $car->ID = 0;
-        $car->Brand = 'Все автомобили';
+        $car->Brand = 'Всі автомобілі';
         $car->Model = '';
         $car->RegistrationNo = '';
         return view('custom.index_acts', compact('group', 'cars', 'car'));
@@ -449,7 +451,7 @@ class PagesController extends Controller
         $group = $group->groupBy('year');
         $handleCar = collect();
         $handleCar->ID = 0;
-        $handleCar->Brand = 'Все автомобили';
+        $handleCar->Brand = 'Всі автомобілі';
         $handleCar->Model = '';
         $handleCar->RegistrationNo = '';
         $cars->push($handleCar);
@@ -639,31 +641,22 @@ class PagesController extends Controller
 
     public function updateAllData()
     {
-        session()->forget('prepareAllData');
+        session()->forget('history');
         $data = $this->prepareAllData();
         return $data;
     }
 
     public function prepareAllData()
     {
-        if (!session()->has('prepareAllData')) {
-            $url = $this::SITE . 'cs/history';
-            $orders = $this->send_request_get($url);
-            $data = [];
-            foreach ($orders as $order) {
-                $no = preg_replace('/\d/', '', $order->No);
-                if ($no == 'W') {
-                    if ($order->DocCode == 'A' || $order->DocCode == 'F') {
-                        $url = $this::SITE . 'cs/history/' . $order->ID . '/' . $order->RecType;
-                        $work = $this->send_request_get($url);
-                        $data[] = $work;
-                    }
-                }
-            }
-            session()->put('prepareAllData', $data);
-        } else {
-            $data = session()->get('prepareAllData');
-        }
+        $api = new ApiController();
+        $data = $api->prepareAllData();
+        return $data;
+    }
+
+    public function prepareAllDataForRecomendations()
+    {
+        $api = new ApiController();
+        $data = $api->recomendData();
         return $data;
     }
 
@@ -694,32 +687,11 @@ class PagesController extends Controller
             $data[$prWork->ID]['orderId'] = $prWork->ID;
             $data[$prWork->ID]['actId'] = $prWork->No;
             $data[$prWork->ID]['RecType'] = $prWork->RecType;
-            $data[$prWork->ID]['status'] = $prWork->StatusCode == "A" ? 'Предварительно' : '';
+            $data[$prWork->ID]['status'] = $prWork->StatusCode == "A" ? 'Попередній' : '';
         }
 
         return $data;
 
-    }
-
-    public function prepareAllDataForRecomendations()
-    {
-        if (!session()->has('prepareAllDataForRecomendations')) {
-            $url = $this::SITE . 'cs/history';
-            $orders = $this->send_request_get($url);
-            $data = [];
-            foreach ($orders as $order) {
-                $no = preg_replace('/\d/', '', $order->No);
-                if ($no == 'W') {
-                    $url = $this::SITE . 'cs/history/' . $order->ID . '/' . $order->RecType;
-                    $work = $this->send_request_get($url);
-                    $data[] = $work;
-                }
-            }
-            session()->put('prepareAllDataForRecomendations', $data);
-        } else {
-            $data = session()->get('prepareAllDataForRecomendations');
-        }
-        return $data;
     }
 
     public function prepareDataForRecomendation()
@@ -843,10 +815,34 @@ class PagesController extends Controller
 
     public function buyTalon()
     {
-        $url = $this::SITE . 'cs/workgroup/63';
-        $works = $this->send_request_get($url);
-        dd($works);
+//        $url = $this::SITE . 'cs/workgroup/63';
+//        $works = $this->send_request_get($url);
+//        dd($works);
+        $array = $this->prepareAllData();
+        $works = collect();
+        foreach ($array as $item) {
+            foreach ($item->Works as $work) {
+                $work->Date = $item->Date;
+                $work->Year = Carbon::parse($item->Date)->format('Y');
+                $work->usage = false;
+                $works->push($work);
+            }
 
+        }
+        $tickets = $works->where('Group', 'Талони');
+        foreach ($works as $work) {
+            foreach ($tickets as $ticket) {
+                $pos = str_contains($work->Description, $ticket->Code);
+                if ($pos === true) {
+                    $ticket->usage = true;
+                }
+            }
+        }
+        $usedTickets = $tickets->where('usage', true)->groupBy('Year');
+        $unusedTickets = $tickets->where('usage', false)->groupBy('Year');
+        $cars = [];
+        $car = [];
+        return view('custom.catalog-talon', compact('usedTickets', 'unusedTickets', 'cars', 'car'));
     }
 
     /**

@@ -28,7 +28,6 @@
             <div class="auth-popup-title">
                 Особистий кабінет
             </div>
-{{--            <small>Логин и пароль это Ваш номер телефона в формате 3801234567</small>--}}
             <form class="auth-popup-form"  role="form" action="{{ route('login.client') }}" method="post">
                 <input type="hidden" name="_token" value="{{ csrf_token() }}" />
                 <div class="field">

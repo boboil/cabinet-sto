@@ -49,38 +49,21 @@ class ApiController extends Controller
     {
         $data = [];
         $prWorks = $this->prepareAllData();
-        foreach ($prWorks as $prWork) {
-            $works = collect();
-            foreach ($prWork->Works as $item) {
-                if ($item->Group == 'Выполнено' && $item->WorkerName != '1Дефектовано!') {
-                    $item->Date = Carbon::parse($prWork->Date)->format('d-m-Y');
-                    $works->push($item);
-                }
-            }
-            $products = collect();
-            foreach ($prWork->Products as $item) {
-                $item->Date = Carbon::parse($prWork->Date)->format('d-m-Y');
-                $products->push($item);
-            }
-            $data[$prWork->ID]['woks'] = $works;
-            $data[$prWork->ID]['products'] = $products;
-            $data[$prWork->ID]['date'] = Carbon::parse($prWork->Date)->format('d-m-Y');
-            $data[$prWork->ID]['year'] = Carbon::parse($prWork->Date)->format('Y');
-            $data[$prWork->ID]['CarOdometer'] = $prWork->CarOdometer;
-            $data[$prWork->ID]['CarName'] = $prWork->CarName;
-            $data[$prWork->ID]['orderId'] = $prWork->ID;
-            $data[$prWork->ID]['actId'] = $prWork->No;
-            $data[$prWork->ID]['RecType'] = $prWork->RecType;
-            $data[$prWork->ID]['status'] = $prWork->StatusCode == "A" ? 'Предварительно' : '';
-        }
-
+        $data = $this->convertData($prWorks, $data);
         return $data;
+    }
 
+    public function prepareJobsData()
+    {
+        $data = [];
+        $prWorks = $this->prepareAllData();
+        $data = $this->convertData($prWorks, $data, false);
+        return $data;
     }
 
     public function prepareAllData()
     {
-        if (!session()->has('prepareAllData')) {
+        if (!session()->has('history')) {
             $url = $this::SITE . 'cs/history';
             $orders = $this->send_request_get($url);
             $data = [];
@@ -94,9 +77,30 @@ class ApiController extends Controller
                     }
                 }
             }
-            session()->put('prepareAllData', $data);
+            session()->put('history', $data);
         } else {
-            $data = session()->get('prepareAllData');
+            $data = session()->get('history');
+        }
+        return $data;
+    }
+
+    public function recomendData()
+    {
+        if (!session()->has('recommend')) {
+            $url = $this::SITE . 'cs/history';
+            $orders = $this->send_request_get($url);
+            $data = [];
+            foreach ($orders as $order) {
+                $no = preg_replace('/\d/', '', $order->No);
+                if ($no == 'W') {
+                    $url = $this::SITE . 'cs/history/' . $order->ID . '/' . $order->RecType;
+                    $work = $this->send_request_get($url);
+                    $data[] = $work;
+                }
+            }
+            session()->put('recommend', $data);
+        } else {
+            $data = session()->get('recommend');
         }
         return $data;
     }
@@ -118,13 +122,13 @@ class ApiController extends Controller
         return $body;
     }
 
-    public function send_request_post($link, $params)
+    public function send_request_post($url, $params)
     {
         $this->authorization = $this->getToken();
         if (!$this->authorization || !is_array($this->authorization)) {
             abort(404);
         }
-
+        $link = $this::SITE . $url;
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $link);
         curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type:application/json', 'Authorization: Bearer ' . $this->access_token));
@@ -132,11 +136,9 @@ class ApiController extends Controller
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($params));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
         $response = curl_exec($ch);
-
-        $header_size = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
-        $body = substr($response, $header_size);
+        $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
-        return $body;
+        return array($response, $httpcode);
     }
 
     public function send_request_get($url)
@@ -156,5 +158,43 @@ class ApiController extends Controller
         $body = substr($out, $header_size);
         curl_close($curl);
         return json_decode($body);
+    }
+
+    /**
+     * @param $prWorks
+     * @param $data
+     * @param $recomWorks boolean
+     * @return mixed
+     */
+    public function convertData($prWorks, $data, $recomWorks = true)
+    {
+        foreach ($prWorks as $prWork) {
+            if (!$recomWorks && $prWork->StatusCode == 'A') {
+                continue;
+            }
+            $works = collect();
+            foreach ($prWork->Works as $item) {
+                if ($item->Group == 'Выполнено' && $item->WorkerName != '1Дефектовано!') {
+                    $item->Date = Carbon::parse($prWork->Date)->format('d-m-Y');
+                    $works->push($item);
+                }
+            }
+            $products = collect();
+            foreach ($prWork->Products as $item) {
+                $item->Date = Carbon::parse($prWork->Date)->format('d-m-Y');
+                $products->push($item);
+            }
+            $data[$prWork->ID]['woks'] = $works;
+            $data[$prWork->ID]['products'] = $products;
+            $data[$prWork->ID]['date'] = Carbon::parse($prWork->Date)->format('d-m-Y');
+            $data[$prWork->ID]['year'] = Carbon::parse($prWork->Date)->format('Y');
+            $data[$prWork->ID]['CarOdometer'] = $prWork->CarOdometer;
+            $data[$prWork->ID]['CarName'] = $prWork->CarName;
+            $data[$prWork->ID]['orderId'] = $prWork->ID;
+            $data[$prWork->ID]['actId'] = $prWork->No;
+            $data[$prWork->ID]['RecType'] = $prWork->RecType;
+            $data[$prWork->ID]['status'] = $prWork->StatusCode == "A" ? 'Попередній' : '';
+        }
+        return $data;
     }
 }
